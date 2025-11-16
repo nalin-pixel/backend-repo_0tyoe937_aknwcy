@@ -2,13 +2,13 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import date
 
 from database import db, create_document, get_documents
 from schemas import CheckIn, TriggerJournal, Goal
 
-app = FastAPI(title="Recovery Companion API", version="1.0.0")
+app = FastAPI(title="Habit Breaker API", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,7 +20,7 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Recovery Companion Backend is running"}
+    return {"message": "Habit Breaker Backend is running"}
 
 @app.get("/api/hello")
 def hello():
@@ -63,7 +63,7 @@ def test_database():
     return response
 
 # -------------------------
-# Recovery-focused Endpoints
+# Habit-focused Endpoints
 # -------------------------
 
 class JournalCreate(BaseModel):
@@ -129,18 +129,63 @@ def list_goals(user_id: Optional[str] = None, limit: int = 20):
                 it[k] = it[k].isoformat()
     return {"items": items}
 
-# Educational tips (non-graphic, supportive content)
-TIPS: List[str] = [
+# Educational tips by habit (non-graphic, supportive content)
+GENERAL_TIPS: List[str] = [
     "Replace the habit loop: identify trigger, routine, reward.",
-    "Use a 10-minute rule: delay the urge and do a grounding exercise.",
-    "Keep devices out of the bedroom and use app/site blockers.",
-    "Build a support system: friend, coach, or community.",
-    "Sleep and exercise improve impulse control and mood.",
+    "Use the 10-minute rule: delay the urge and do a grounding exercise.",
+    "Design your environment to make the bad habit harder and the good one easier.",
+    "Build accountability: a friend, coach, or community.",
+    "Sleep, food, and exercise improve impulse control and mood.",
 ]
 
+HABIT_TIPS: Dict[str, List[str]] = {
+    "general": GENERAL_TIPS,
+    "phone": [
+        "Set scheduled Do Not Disturb and remove non-essential notifications.",
+        "Keep the phone outside your bedroom; use an alarm clock.",
+        "Make your home screen a folder of tools, not temptations.",
+    ] + GENERAL_TIPS,
+    "junk food": [
+        "Shop the perimeter; keep healthy snacks visible and ready.",
+        "Pre-commit: don't buy trigger foods; use smaller plates.",
+        "Protein at breakfast reduces cravings later.",
+    ] + GENERAL_TIPS,
+    "procrastination": [
+        "Start with a 2-minute version of the task.",
+        "Time-box work in 25-minute sprints (Pomodoro).",
+        "Write the next actionable step and set a start time.",
+    ] + GENERAL_TIPS,
+    "smoking": [
+        "List your cues and avoid them for the first 30 days.",
+        "Use nicotine replacement as advised; track cravings.",
+        "Pair urges with deep breathing and a short walk.",
+    ] + GENERAL_TIPS,
+    "alcohol": [
+        "Alcohol-free days: schedule 3-4 per week to reset.",
+        "Swap evening drinks for a ritual: tea, shower, stretch.",
+        "Avoid 'just one': decide in advance and tell a friend.",
+    ] + GENERAL_TIPS,
+    "gambling": [
+        "Self-exclude from apps and venues; block access.",
+        "Delay betting by 15 minutes; call someone instead.",
+        "Track wins/losses honestly; set hard financial limits.",
+    ] + GENERAL_TIPS,
+}
+
 @app.get("/api/tips")
-def get_tips():
-    return {"tips": TIPS}
+def get_tips(habit: Optional[str] = None):
+    key = (habit or "general").strip().lower()
+    tips = HABIT_TIPS.get(key, GENERAL_TIPS)
+    # Return up to 8 unique tips preserving order
+    seen = set()
+    ordered = []
+    for t in tips:
+        if t not in seen:
+            seen.add(t)
+            ordered.append(t)
+        if len(ordered) >= 8:
+            break
+    return {"tips": ordered, "habit": key}
 
 if __name__ == "__main__":
     import uvicorn
