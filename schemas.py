@@ -11,7 +11,7 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 from datetime import date
 
@@ -39,7 +39,16 @@ class Product(BaseModel):
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Quit-porn support app schemas
+# Habit Breaker app schemas
+
+class AuthUser(BaseModel):
+    """
+    Auth users for the application.
+    Collection name: "authuser"
+    """
+    email: EmailStr
+    password_hash: str
+    display_name: Optional[str] = None
 
 class CheckIn(BaseModel):
     """
