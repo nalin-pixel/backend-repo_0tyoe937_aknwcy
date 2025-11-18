@@ -13,7 +13,7 @@ Model name is converted to lowercase for the collection name:
 
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 
 # Example schemas (you can keep or ignore these in your app):
 
@@ -49,6 +49,11 @@ class AuthUser(BaseModel):
     email: EmailStr
     password_hash: str
     display_name: Optional[str] = None
+    selected_habit: Optional[str] = Field("general", description="Preferred habit focus key")
+    is_verified: bool = Field(False, description="Has verified email")
+    verify_token: Optional[str] = None
+    reset_token: Optional[str] = None
+    reset_token_expires: Optional[datetime] = None
 
 class CheckIn(BaseModel):
     """
@@ -77,5 +82,6 @@ class Goal(BaseModel):
     title: str = Field(..., min_length=3, max_length=100)
     target_days: int = Field(..., ge=1, le=3650)
     start_date: date = Field(default_factory=date.today)
+    completed_date: Optional[date] = None
 
 # Add additional schemas here if needed.
